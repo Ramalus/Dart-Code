@@ -139,6 +139,7 @@ export class FlutterDebugSession extends DartDebugSession {
 				case "serviceExtension":
 					if (this.currentRunningAppId)
 						await this.flutter.callServiceExtension(this.currentRunningAppId, args.type, args.params);
+					this.sendResponse(response);
 					break;
 
 				case "togglePlatform":
@@ -146,16 +147,19 @@ export class FlutterDebugSession extends DartDebugSession {
 						const result = await this.flutter.callServiceExtension(this.currentRunningAppId, "ext.flutter.platformOverride", null);
 						await this.flutter.callServiceExtension(this.currentRunningAppId, "ext.flutter.platformOverride", { value: result.value === "android" ? "iOS" : "android" });
 					}
+					this.sendResponse(response);
 					break;
 
 				case "hotReload":
 					if (this.currentRunningAppId)
 						await this.performReload(false);
+					this.sendResponse(response);
 					break;
 
 				case "hotRestart":
 					if (this.currentRunningAppId)
 						await this.performReload(true);
+					this.sendResponse(response);
 					break;
 
 				default:
