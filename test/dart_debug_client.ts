@@ -5,6 +5,7 @@ import { DebugProtocol } from "vscode-debugprotocol";
 import { debugLogTypes, handleDebugLogEvent } from "../src/utils/log";
 import { Notification, Test, TestDoneNotification, TestStartNotification } from "../src/views/test_protocol";
 import { DebugClient } from "./debug_client_ms";
+import { delay } from "./helpers";
 
 export class DartDebugClient extends DebugClient {
 	constructor(runtime: string, executable: string, debugType: string, spwanOptions?: SpawnOptions) {
@@ -165,5 +166,15 @@ export class DartDebugClient extends DebugClient {
 
 	public assertErroringTest(testName: string) {
 		return this.assertTestStatus(testName, "error");
+	}
+
+	public async hotReload(): Promise<void> {
+		// If we reload too fast, things fail :-/
+		await delay(500);
+
+		await Promise.all([
+			this.assertOutput("stdout", "Reloaded").then((_) => console.log("got reload text")),
+			this.customRequest("hotReload").then((_) => console.log("reload done!")),
+		]);
 	}
 }
