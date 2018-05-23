@@ -110,12 +110,10 @@ describe("dart cli debugger", () => {
 	it("stops at a breakpoint", async () => {
 		await openFile(helloWorldMainFile);
 		const config = await startDebugger(helloWorldMainFile);
-		await Promise.all([
-			dc.hitBreakpoint(config, {
-				line: positionOf("^// BREAKPOINT1").line + 1, // positionOf is 0-based, but seems to want 1-based
-				path: fsPath(helloWorldMainFile),
-			}),
-		]);
+		await dc.hitBreakpoint(config, {
+			line: positionOf("^// BREAKPOINT1").line + 1, // positionOf is 0-based, but seems to want 1-based
+			path: fsPath(helloWorldMainFile),
+		});
 		const stack = await dc.getStack();
 		const frames = stack.body.stackFrames;
 		assert.equal(frames[0].name, "main");
@@ -129,12 +127,10 @@ describe("dart cli debugger", () => {
 		// Get location for `print`
 		const def = await getDefinition(positionOf("pri^nt("));
 		const config = await startDebugger(helloWorldMainFile);
-		await Promise.all([
-			dc.hitBreakpoint(config, {
-				line: def.range.start.line + 1,
-				path: fsPath(def.uri),
-			}),
-		]);
+		await dc.hitBreakpoint(config, {
+			line: def.range.start.line + 1,
+			path: fsPath(def.uri),
+		});
 		const stack = await dc.getStack();
 		const frames = stack.body.stackFrames;
 		assert.equal(frames[0].name, "print");
@@ -147,12 +143,10 @@ describe("dart cli debugger", () => {
 		// Get location for `http.read`
 		const def = await getDefinition(positionOf("http.re^ad"));
 		const config = await startDebugger(helloWorldHttpFile);
-		await Promise.all([
-			dc.hitBreakpoint(config, {
-				line: def.range.start.line + 1,
-				path: fsPath(def.uri),
-			}),
-		]);
+		await dc.hitBreakpoint(config, {
+			line: def.range.start.line + 1,
+			path: fsPath(def.uri),
+		});
 		const stack = await dc.getStack();
 		const frames = stack.body.stackFrames;
 		assert.equal(frames[0].name, "read");
@@ -310,12 +304,10 @@ describe("dart cli debugger", () => {
 	it("provides local variables when stopped at a breakpoint", async () => {
 		await openFile(helloWorldMainFile);
 		const config = await startDebugger(helloWorldMainFile);
-		await Promise.all([
-			dc.hitBreakpoint(config, {
-				line: positionOf("^// BREAKPOINT1").line + 1, // positionOf is 0-based, but seems to want 1-based
-				path: fsPath(helloWorldMainFile),
-			}),
-		]);
+		await dc.hitBreakpoint(config, {
+			line: positionOf("^// BREAKPOINT1").line + 1, // positionOf is 0-based, but seems to want 1-based
+			path: fsPath(helloWorldMainFile),
+		});
 
 		const variables = await dc.getTopFrameVariables("Locals");
 		ensureVariable(variables, "l", "l", `List (2 items)`);
@@ -388,12 +380,10 @@ describe("dart cli debugger", () => {
 	it("watch expressions provide same info as locals", async () => {
 		await openFile(helloWorldMainFile);
 		const config = await startDebugger(helloWorldMainFile);
-		await Promise.all([
-			dc.hitBreakpoint(config, {
-				line: positionOf("^// BREAKPOINT1").line + 1, // positionOf is 0-based, but seems to want 1-based
-				path: fsPath(helloWorldMainFile),
-			}),
-		]);
+		await dc.hitBreakpoint(config, {
+			line: positionOf("^// BREAKPOINT1").line + 1, // positionOf is 0-based, but seems to want 1-based
+			path: fsPath(helloWorldMainFile),
+		});
 
 		const variables = await dc.getTopFrameVariables("Locals");
 		const listVariables = await dc.getVariables(variables.find((v) => v.name === "l").variablesReference);
@@ -491,12 +481,10 @@ describe("dart cli debugger", () => {
 			const observatoryUri = await process.observatoryUri;
 
 			const config = await attachDebugger(observatoryUri);
-			await Promise.all([
-				dc.hitBreakpoint(config, {
-					line: positionOf("^// BREAKPOINT1").line + 1, // positionOf is 0-based, but seems to want 1-based
-					path: fsPath(helloWorldMainFile),
-				}),
-			]);
+			await dc.hitBreakpoint(config, {
+				line: positionOf("^// BREAKPOINT1").line + 1, // positionOf is 0-based, but seems to want 1-based
+				path: fsPath(helloWorldMainFile),
+			});
 		});
 
 		it("and removes breakpoints and unpauses on detach", async () => {
