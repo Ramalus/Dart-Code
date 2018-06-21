@@ -9,7 +9,7 @@ import { AnalyzerCapabilities } from "../src/analysis/analyzer";
 import { dartCodeExtensionIdentifier } from "../src/debug/utils";
 import { DartRenameProvider } from "../src/providers/dart_rename_provider";
 import { DebugConfigProvider } from "../src/providers/debug_config_provider";
-import { fsPath, Sdks, vsCodeVersionConstraint } from "../src/utils";
+import { Sdks, fsPath, vsCodeVersionConstraint } from "../src/utils";
 import { log, logError, logTo, logWarn } from "../src/utils/log";
 import sinon = require("sinon");
 
@@ -145,7 +145,7 @@ afterEach("run deferred functions", async function () {
 	let firstError: any;
 	for (const d of _.concat(deferredItems, deferredToLastItems)) {
 		try {
-			await d(this.currentTest && this.currentTest.state);
+			await d(this.currentTest ? this.currentTest.state : undefined);
 		} catch (e) {
 			logError(`Error running deferred function: ${e}`);
 			// TODO: Add named for deferred functions instead...

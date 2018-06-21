@@ -17,21 +17,21 @@ import { CoverageData, DartAttachRequestArguments, DartLaunchRequestArguments, F
 // completionsRequest(response: DebugProtocol.CompletionsResponse, args: DebugProtocol.CompletionsArguments): void;
 export class DartDebugSession extends DebugSession {
 	// TODO: Tidy all this up
-	protected childProcess: child_process.ChildProcess;
+	protected childProcess?: child_process.ChildProcess;
 	protected additionalPidsToTerminate: number[] = [];
 	// We normally track the pid from Observatory to terminate the VM afterwards, but for Flutter Run it's
 	// a remote PID and therefore doesn't make sense to try and terminate.
 	protected allowTerminatingObservatoryVmPid = true;
 	private processExited: boolean = false;
-	public observatory: ObservatoryConnection;
+	public observatory?: ObservatoryConnection;
 	protected cwd?: string;
-	private logFile: string;
-	private logStream: fs.WriteStream;
-	public debugSdkLibraries: boolean;
-	public debugExternalLibraries: boolean;
-	public evaluateGettersInDebugViews: boolean;
+	private logFile?: string;
+	private logStream?: fs.WriteStream;
+	public debugSdkLibraries = false;
+	public debugExternalLibraries = false;
+	public evaluateGettersInDebugViews = false;
 	private threadManager: ThreadManager;
-	public packageMap: PackageMap;
+	public packageMap?: PackageMap;
 	protected sendStdOutToConsole: boolean = true;
 	protected requiresProgram: boolean = true;
 	protected pollforMemoryMs?: number; // If set, will poll for memory usage and send events back.
@@ -269,10 +269,10 @@ export class DartDebugSession extends DebugSession {
 				this.log(`Observatory connection closed: ${code} (${message})`);
 				if (this.logStream) {
 					this.logStream.end();
-					this.logStream = null;
+					this.logStream = undefined;
 					// Wipe out the filename so if a message arrives late, it doesn't
 					// wipe out the logfile with just a "process exited" or similar message.
-					this.logFile = null;
+					this.logFile = undefined;
 				}
 				// This event arrives before the process exit event.
 				setTimeout(() => {
@@ -310,7 +310,7 @@ export class DartDebugSession extends DebugSession {
 					// This tends to throw a lot because the shell process quit when we terminated the related
 					// VM process above, so just swallow the error.
 				}
-				this.childProcess = null;
+				this.childProcess = undefined;
 			} else if (this.observatory) {
 				try {
 					this.log(`Disconnecting from process...`);
@@ -491,12 +491,12 @@ export class DartDebugSession extends DebugSession {
 
 				const uri = location.script.uri;
 				const shortName = this.convertVMUriToUserName(uri);
-				let sourcePath = this.convertVMUriToSourcePath(uri);
+				let sourcePath: string | undefined = this.convertVMUriToSourcePath(uri);
 
 				// Download the source if from a "dart:" uri.
 				let sourceReference: number;
 				if (uri.startsWith("dart:")) {
-					sourcePath = null;
+					sourcePath = undefined;
 					sourceReference = thread.storeData(location.script);
 				}
 

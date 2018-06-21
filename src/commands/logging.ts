@@ -15,7 +15,7 @@ export class LoggingCommands implements vs.Disposable {
 		);
 	}
 
-	private lastUsedLogPath: vs.Uri;
+	private lastUsedLogPath?: vs.Uri;
 	private async startLogging(): Promise<void> {
 		// Use last log file location or inside first workspace folder.
 		let defaultUri = this.lastUsedLogPath;

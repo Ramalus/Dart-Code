@@ -95,7 +95,7 @@ export class Analyzer extends AnalyzerGen {
 					this.isAnalyzing = false;
 					if (this.currentAnalysisCompleter) {
 						this.currentAnalysisCompleter.resolve();
-						this.currentAnalysisCompleter = null;
+						this.currentAnalysisCompleter = undefined;
 					}
 				}
 			}
@@ -104,16 +104,12 @@ export class Analyzer extends AnalyzerGen {
 
 	private resolvedPromise = Promise.resolve();
 	public get currentAnalysis(): Promise<void> {
-		// If we're analyzing and don't already have a completer, set one up
-		// for the analyzer to signal when done. We do this here so it's lazy, so
-		// we're not needlessly creating them on every analysis (which can be on
-		// every key press).
-		if (this.isAnalyzing && !this.currentAnalysisCompleter) {
+		if (!this.isAnalyzing)
+			return this.resolvedPromise;
+
+		if (!this.currentAnalysisCompleter)
 			this.currentAnalysisCompleter = new PromiseCompleter<void>();
-		}
-		return this.isAnalyzing
-			? this.currentAnalysisCompleter.promise
-			: this.resolvedPromise;
+		return this.currentAnalysisCompleter.promise;
 	}
 
 	protected sendMessage<T>(json: string) {
@@ -134,7 +130,7 @@ export class Analyzer extends AnalyzerGen {
 	}
 
 	private async requestDiagnosticsUpdate() {
-		this.lastDiagnostics = null;
+		this.lastDiagnostics = undefined;
 
 		if (!this.capabilities.supportsDiagnostics)
 			return;
@@ -142,7 +138,7 @@ export class Analyzer extends AnalyzerGen {
 		this.lastDiagnostics = (await this.diagnosticGetDiagnostics()).contexts;
 	}
 
-	public getLastDiagnostics(): as.ContextData[] {
+	public getLastDiagnostics(): as.ContextData[] | undefined {
 		return this.lastDiagnostics;
 	}
 
@@ -210,7 +206,7 @@ export class Analyzer extends AnalyzerGen {
 	): Promise<TResponse> {
 		return new Promise<TResponse>((resolve, reject) => {
 			const buffer: TResponse[] = []; // Buffer to store results that come in before we're ready.
-			let searchResultsID: string = null; // ID that'll be set once we get it back.
+			let searchResultsID: string | undefined; // ID that'll be set once we get it back.
 
 			const disposable = registerForResults.bind(this)((notification: TResponse) => {
 				// If we know our ID and this is it, and it's the last result, then resolve.
