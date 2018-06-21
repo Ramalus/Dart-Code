@@ -38,11 +38,11 @@ export class AnalyzerCapabilities {
 }
 
 export class Analyzer extends AnalyzerGen {
-	private lastDiagnostics: as.ContextData[];
+	private lastDiagnostics?: as.ContextData[];
 	private launchArgs: string[];
-	private version: string;
+	private version?: string;
 	private isAnalyzing = false;
-	private currentAnalysisCompleter: PromiseCompleter<void>;
+	private currentAnalysisCompleter?: PromiseCompleter<void>;
 	public capabilities: AnalyzerCapabilities = new AnalyzerCapabilities("0.0.1");
 
 	constructor(dartVMPath: string, analyzerPath: string) {

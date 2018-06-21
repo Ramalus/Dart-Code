@@ -6,9 +6,9 @@ import { fsPath, isAnalyzable } from "../utils";
 export class ClosingLabelsDecorations implements vs.Disposable {
 	private analyzer: Analyzer;
 	private subscriptions: vs.Disposable[] = [];
-	private activeEditor: vs.TextEditor;
-	private closingLabels: as.AnalysisClosingLabelsNotification;
-	private updateTimeout: NodeJS.Timer;
+	private activeEditor?: vs.TextEditor;
+	private closingLabels?: as.AnalysisClosingLabelsNotification;
+	private updateTimeout?: NodeJS.Timer;
 
 	private readonly decorationType = vs.window.createTextEditorDecorationType({
 		after: {
@@ -42,7 +42,7 @@ export class ClosingLabelsDecorations implements vs.Disposable {
 
 		const decorations: { [key: number]: vs.DecorationOptions } = [];
 
-		this.closingLabels.labels.forEach((r) => {
+		for (const r of this.closingLabels.labels) {
 			const finalCharacterPosition = this.activeEditor.document.positionAt(r.offset + r.length);
 			const finalCharacterRange =
 				finalCharacterPosition.character > 0
@@ -66,7 +66,7 @@ export class ClosingLabelsDecorations implements vs.Disposable {
 				};
 				decorations[endOfLine.line] = dec;
 			}
-		});
+		}
 
 		this.activeEditor.setDecorations(this.decorationType, Object.keys(decorations).map((k) => parseInt(k, 10)).map((k) => decorations[k]));
 	}

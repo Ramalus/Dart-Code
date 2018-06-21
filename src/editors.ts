@@ -1,8 +1,8 @@
 import * as vs from "vscode";
 
-export function hasActiveDartEditor(): boolean {
-	if (!vs.window.activeTextEditor)
-		return false;
-
-	return vs.window.activeTextEditor.document.languageId === "dart";
+export function getActiveDartEditor(): vs.TextEditor | undefined {
+	const editor = vs.window.activeTextEditor;
+	if (!editor || editor.document.languageId !== "dart")
+		return undefined;
+	return editor;
 }

@@ -16,11 +16,11 @@ const sendFakeErrorAtStartup = false;
 let errorCount = 0;
 
 export class AnalyzerStatusReporter {
-	private analysisInProgress: boolean;
+	private analysisInProgress = false;
 	private analyzer: Analyzer;
 	private sdks: Sdks;
 	private analytics: Analytics;
-	private analyzingPromise: PromiseCompleter<void>;
+	private analyzingPromise?: PromiseCompleter<void>;
 
 	constructor(analyzer: Analyzer, sdks: Sdks, analytics: Analytics) {
 		this.analyzer = analyzer;
@@ -36,7 +36,7 @@ export class AnalyzerStatusReporter {
 					{
 						isFatal: false,
 						message: "This is a fake error for testing the error reporting!",
-						stackTrace: new Error().stack,
+						stackTrace: new Error().stack || "",
 					},
 					"testError",
 				);
@@ -56,14 +56,17 @@ export class AnalyzerStatusReporter {
 				// When the timeout fires, we need to check analysisInProgress again in case
 				// analysis has already finished.
 				if (this.analysisInProgress && !this.analyzingPromise) {
-					this.analyzingPromise = new PromiseCompleter();
-					window.withProgress({ location: ProgressLocation.Window, title: "Analyzing…" }, (_) => this.analyzingPromise.promise);
+					window.withProgress({ location: ProgressLocation.Window, title: "Analyzing…" }, (_) => {
+						if (!this.analyzingPromise) // Re-check, since we don't know how long before this callback is called.
+							this.analyzingPromise = new PromiseCompleter();
+						return this.analyzingPromise.promise;
+					});
 				}
 			}, 500);
 		} else {
 			if (this.analyzingPromise) {
 				this.analyzingPromise.resolve();
-				this.analyzingPromise = null;
+				this.analyzingPromise = undefined;
 			}
 		}
 	}
@@ -74,7 +77,7 @@ export class AnalyzerStatusReporter {
 			{
 				isFatal: false,
 				message: error.message,
-				stackTrace: error.stackTrace,
+				stackTrace: error.stackTrace || "",
 			},
 			error.method,
 		);
