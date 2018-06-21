@@ -9,7 +9,7 @@ import { AnalyzerCapabilities } from "../src/analysis/analyzer";
 import { dartCodeExtensionIdentifier } from "../src/debug/utils";
 import { DartRenameProvider } from "../src/providers/dart_rename_provider";
 import { DebugConfigProvider } from "../src/providers/debug_config_provider";
-import { Sdks, fsPath, vsCodeVersionConstraint } from "../src/utils";
+import { fsPath, Sdks, vsCodeVersionConstraint } from "../src/utils";
 import { log, logError, logTo, logWarn } from "../src/utils/log";
 import sinon = require("sinon");
 
@@ -22,7 +22,7 @@ export const ext = vs.extensions.getExtension<{
 	reanalyze: () => void,
 	renameProvider: DartRenameProvider,
 	sdks: Sdks,
-}>(dartCodeExtensionIdentifier);
+}>(dartCodeExtensionIdentifier)!;
 
 if (!ext) {
 	if (semver.satisfies(vs.version, vsCodeVersionConstraint)) {
@@ -108,6 +108,8 @@ export async function openFile(file: vs.Uri): Promise<vs.TextEditor> {
 }
 
 beforeEach("set logger", async function () {
+	if (!this.currentTest)
+		return;
 	const logFolder = process.env.DC_TEST_LOGS || path.join(ext.extensionPath, ".dart_code_test_logs");
 	if (!fs.existsSync(logFolder))
 		fs.mkdirSync(logFolder);
@@ -116,7 +118,7 @@ beforeEach("set logger", async function () {
 
 	const logger = logTo(logPath);
 
-	deferUntilLast(async (testResult: "passed" | "failed") => {
+	deferUntilLast(async (testResult?: "passed" | "failed") => {
 		await logger.dispose();
 		// On CI, we delete logs for passing tests to save money on S3 :-)
 		if (process.env.CI && testResult === "passed") {
@@ -143,7 +145,7 @@ afterEach("run deferred functions", async function () {
 	let firstError: any;
 	for (const d of _.concat(deferredItems, deferredToLastItems)) {
 		try {
-			await d(this.currentTest.state);
+			await d(this.currentTest && this.currentTest.state);
 		} catch (e) {
 			logError(`Error running deferred function: ${e}`);
 			// TODO: Add named for deferred functions instead...
@@ -185,7 +187,6 @@ export function select(range: vs.Range) {
 }
 
 export function positionOf(searchText: string): vs.Position {
-	const doc = vs.window.activeTextEditor.document;
 	const caretOffset = searchText.indexOf("^");
 	assert.notEqual(caretOffset, -1, `Couldn't find a ^ in search text (${searchText})`);
 	const matchedTextIndex = doc.getText().indexOf(searchText.replace("^", "").replace(/\n/g, documentEol));
@@ -195,7 +196,6 @@ export function positionOf(searchText: string): vs.Position {
 }
 
 export function rangeOf(searchText: string, inside?: vs.Range): vs.Range {
-	const doc = vs.window.activeTextEditor.document;
 	const startOffset = searchText.indexOf("|");
 	assert.notEqual(startOffset, -1, `Couldn't find a | in search text (${searchText})`);
 	const endOffset = searchText.lastIndexOf("|");
@@ -220,7 +220,6 @@ export async function getDocumentSymbols(): Promise<vs.SymbolInformation[]> {
 }
 
 export async function getDefinitions(position: vs.Position): Promise<vs.Location[]> {
-	const doc = vs.window.activeTextEditor.document;
 	const definitionResult = await (vs.commands.executeCommand("vscode.executeDefinitionProvider", doc.uri, position) as Thenable<vs.Location[]>);
 	return definitionResult || [];
 }
@@ -257,7 +256,7 @@ export function ensureError(errors: vs.Diagnostic[], text: string) {
 }
 
 export function ensureSymbol(symbols: vs.SymbolInformation[], name: string, kind: vs.SymbolKind, containerName?: string, uri: vs.Uri = doc.uri, shouldHaveRange = true): void {
-	const symbol = symbols.find((f) =>
+	let symbol = symbols.find((f) =>
 		f.name === name
 		&& f.kind === kind
 		&& (f.containerName || "") === (containerName || ""),
@@ -267,6 +266,7 @@ export function ensureSymbol(symbols: vs.SymbolInformation[], name: string, kind
 		`Couldn't find symbol for ${name}/${vs.SymbolKind[kind]}/${containerName} in\n`
 		+ symbols.map((s) => `        ${s.name}/${vs.SymbolKind[s.kind]}/${s.containerName}`).join("\n"),
 	);
+	symbol = symbol!;
 	assert.equal(fsPath(symbol.location.uri), fsPath(uri));
 	assert.ok(symbol.location);
 	if (shouldHaveRange) {
@@ -327,7 +327,7 @@ export async function getSnippetCompletionsAt(searchText: string, triggerCharact
 }
 
 export function ensureCompletion(items: vs.CompletionItem[], kind: vs.CompletionItemKind, label: string, filterText?: string, documentation?: string): void {
-	const completion = items.find((item) =>
+	let completion = items.find((item) =>
 		item.label === label
 		&& item.filterText === filterText
 		&& item.kind === kind,
@@ -335,8 +335,9 @@ export function ensureCompletion(items: vs.CompletionItem[], kind: vs.Completion
 	assert.ok(
 		completion,
 		`Couldn't find completion for ${label}/${filterText} in\n`
-		+ items.map((item) => `        ${vs.CompletionItemKind[item.kind]}/${item.label}/${item.filterText}`).join("\n"),
+		+ items.map((item) => `        ${item.kind && vs.CompletionItemKind[item.kind]}/${item.label}/${item.filterText}`).join("\n"),
 	);
+	completion = completion!;
 	if (documentation) {
 		assert.equal(((completion.documentation as any).value as string).trim(), documentation);
 	}
@@ -462,7 +463,7 @@ async function getResolvedDebugConfiguration(extraConfiguration?: { [key: string
 		request: "launch",
 		type: "dart",
 	}, extraConfiguration);
-	return await ext.exports.debugProvider.resolveDebugConfiguration(vs.workspace.workspaceFolders[0], debugConfig);
+	return await ext.exports.debugProvider.resolveDebugConfiguration(vs.workspace.workspaceFolders![0], debugConfig);
 }
 
 export async function getLaunchConfiguration(script?: vs.Uri | string, extraConfiguration?: { [key: string]: any }): Promise<vs.DebugConfiguration> {
