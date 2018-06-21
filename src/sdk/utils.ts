@@ -1,11 +1,11 @@
 import * as fs from "fs";
 import * as path from "path";
-import { commands, ExtensionContext, window } from "vscode";
+import { ExtensionContext, commands, window } from "vscode";
 import { Analytics } from "../analytics";
 import { config } from "../config";
 import { PackageMap } from "../debug/package_map";
 import { isWin, platformName } from "../debug/utils";
-import { FLUTTER_CREATE_PROJECT_TRIGGER_FILE, fsPath, getDartWorkspaceFolders, openInBrowser, ProjectType, reloadExtension, resolvePaths, Sdks } from "../utils";
+import { FLUTTER_CREATE_PROJECT_TRIGGER_FILE, ProjectType, Sdks, fsPath, getDartWorkspaceFolders, openInBrowser, reloadExtension, resolvePaths } from "../utils";
 
 const dartExecutableName = isWin ? "dart.exe" : "dart";
 const pubExecutableName = isWin ? "pub.bat" : "pub";
@@ -220,7 +220,7 @@ function extractFlutterSdkPathFromPackagesFile(file: string): string {
 	return packagePath;
 }
 
-function findFuchsiaRoot(folder: string): string {
+function findFuchsiaRoot(folder: string): string | undefined {
 	if (folder) {
 		// Walk up the directories from the workspace root, and see if there
 		// exists a directory which has ".jiri_root" directory as a child.
@@ -241,7 +241,7 @@ function findFuchsiaRoot(folder: string): string {
 		}
 	}
 
-	return null;
+	return undefined;
 }
 
 export const hasDartExecutable = (pathToTest: string) => hasExecutable(pathToTest, dartExecutableName);
